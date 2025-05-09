@@ -1,722 +1,4 @@
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar un color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1,  // 1 = visible, 0 = destruido
-                    color: brickColor 
-                };
-            }
-        }
-    }
-    
-    // Dibujar la pelota
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar la paleta
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-        ctx.fillStyle = paddle.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar los ladrillos
-    function dibujarLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            for (let r = 0; r < brickRowCount; r++) {
-                if (bricks[c][r].status === 1) {
-                    ctx.beginPath();
-                    ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[c][r].color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.closePath();
-                }
-            }
-        }
-    }
-    
-    // Dibujar puntuación y vidas
-    function dibujarPuntuacion() {
-        scoreElement.textContent = score;
-        livesElement.textContent = lives;
-    }
-    
-    // Crear los ladrillos al cargar la página
-    crearLadrillos();
-    
-    // Dibujar todos los elementos
-    dibujarLadrillos();
-    dibujarPelota();
-    dibujarPaleta();
-    dibujarPuntuacion();
-    
-    // Evento para el botón de inicio
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado - Todos los elementos dibujados');
-    });
-});
-```
-
-## 6. Implementación del Game Loop Básico (30 minutos)
-
-### 6.1 Crear la función principal de dibujo
-
-Vamos a implementar un game loop básico que se encargará de actualizar y redibujar los elementos del juego:
-
-```javascript
-// script.js - Game Loop Básico
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    let animationId;
-    
-    // Propiedades de la pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,
-        dy: -4,
-        color: '#FF6347'
-    };
-    
-    // Propiedades de la paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-    
-    // Propiedades de los ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    const bricks = [];
-    
-    // Crear ladrillos
-    function crearLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1, 
-                    color: brickColor 
-                };
-            }
-        }
-    }
-    
-    // Dibujar pelota
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar paleta
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-        ctx.fillStyle = paddle.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar ladrillos
-    function dibujarLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            for (let r = 0; r < brickRowCount; r++) {
-                if (bricks[c][r].status === 1) {
-                    ctx.beginPath();
-                    ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[c][r].color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.closePath();
-                }
-            }
-        }
-    }
-    
-    // Dibujar puntuación
-    function dibujarPuntuacion() {
-        scoreElement.textContent = score;
-        livesElement.textContent = lives;
-    }
-    
-    // Función principal de dibujo (Game Loop)
-    function dibujar() {
-        // Limpiar canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Dibujar elementos del juego
-        dibujarLadrillos();
-        dibujarPelota();
-        dibujarPaleta();
-        dibujarPuntuacion();
-        
-        // Continuar animación
-        if (gameRunning) {
-            animationId = requestAnimationFrame(dibujar);
-        }
-    }
-    
-    // Iniciar juego
-    function iniciarJuego() {
-        if (!gameRunning) {
-            gameRunning = true;
-            gameOverElement.style.display = 'none';
-            dibujar();
-        }
-    }
-    
-    // Event listeners
-    startButton.addEventListener('click', iniciarJuego);
-    
-    // Configuración inicial
-    crearLadrillos();
-    dibujarLadrillos();
-    dibujarPelota();
-    dibujarPaleta();
-    dibujarPuntuacion();
-});
-```
-
-## 7. Animación Básica: Moviendo la Pelota (30 minutos)
-
-### 7.1 Actualizar la posición de la pelota
-
-Ahora, vamos a añadir la función para actualizar la posición de la pelota y hacerla rebotar en los bordes:
-
-```javascript
-// script.js - Animación Básica
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    let animationId;
-    
-    // Propiedades de la pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,
-        dy: -4,
-        color: '#FF6347'
-    };
-    
-    // Propiedades de la paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-    
-    // Propiedades de los ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    const bricks = [];
-    
-    // Crear ladrillos
-    function crearLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1, 
-                    color: brickColor 
-                };
-            }
-        }
-    }
-    
-    // Dibujar pelota
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar paleta
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-        ctx.fillStyle = paddle.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar ladrillos
-    function dibujarLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            for (let r = 0; r < brickRowCount; r++) {
-                if (bricks[c][r].status === 1) {
-                    ctx.beginPath();
-                    ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[c][r].color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.closePath();
-                }
-            }
-        }
-    }
-    
-    // Dibujar puntuación
-    function dibujarPuntuacion() {
-        scoreElement.textContent = score;
-        livesElement.textContent = lives;
-    }
-    
-    // Actualizar posición de la pelota
-    function actualizarPelota() {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-        
-        // Colisión con paredes (izquierda y derecha)
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-            ball.dx = -ball.dx;
-        }
-        
-        // Colisión con techo
-        if (ball.y - ball.radius < 0) {
-            ball.dy = -ball.dy;
-        }
-        
-        // Colisión con suelo (perder vida)
-        if (ball.y + ball.radius > canvas.height) {
-            // Por ahora, solo invertimos la dirección para que rebote
-            ball.dy = -ball.dy;
-        }
-    }
-    
-    // Game Loop principal
-    function dibujar() {
-        // Limpiar canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Dibujar elementos del juego
-        dibujarLadrillos();
-        dibujarPelota();
-        dibujarPaleta();
-        dibujarPuntuacion();
-        
-        // Actualizar estado del juego
-        actualizarPelota();
-        
-        // Continuar animación
-        if (gameRunning) {
-            animationId = requestAnimationFrame(dibujar);
-        }
-    }
-    
-    // Iniciar juego
-    function iniciarJuego() {
-        if (!gameRunning) {
-            gameRunning = true;
-            gameOverElement.style.display = 'none';
-            dibujar();
-        }
-    }
-    
-    // Event listeners
-    startButton.addEventListener('click', iniciarJuego);
-    
-    // Configuración inicial
-    crearLadrillos();
-    dibujarLadrillos();
-    dibujarPelota();
-    dibujarPaleta();
-    dibujarPuntuacion();
-});
-```
-
-## 8. Ejercicio Final: Juntando Todo (30 minutos)
-
-Finalicemos la primera clase con un código completo que muestra todos los elementos del juego y anima la pelota moviéndose y rebotando en las paredes:
-
-```javascript
-// script.js - Código completo para la Clase 1
-document.addEventListener('DOMContentLoaded', () => {
-    // Obtener elementos del DOM
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    let animationId;
-
-    // Pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,
-        dy: -4,
-        color: '#FF6347'
-    };
-
-    // Paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-
-    // Ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    const bricks = [];
-
-    // Crear ladrillos
-    function crearLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1, 
-                    color: brickColor 
-                };
-            }
-        }
-    }
-
-    // Dibujar pelota
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    // Dibujar paleta
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-        ctx.fillStyle = paddle.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    // Dibujar ladrillos
-    function dibujarLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            for (let r = 0; r < brickRowCount; r++) {
-                if (bricks[c][r].status === 1) {
-                    ctx.beginPath();
-                    ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[c][r].color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.closePath();
-                }
-            }
-        }
-    }
-
-    // Dibujar puntuación
-    function dibujarPuntuacion() {
-        scoreElement.textContent = score;
-        livesElement.textContent = lives;
-    }
-
-    // Actualizar posición de la pelota
-    function actualizarPelota() {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-        
-        // Colisión con paredes (izquierda y derecha)
-        if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-            ball.dx = -ball.dx;
-        }
-        
-        // Colisión con techo
-        if (ball.y - ball.radius < 0) {
-            ball.dy = -ball.dy;
-        }
-        
-        // Colisión con suelo (perder vida)
-        if (ball.y + ball.radius > canvas.height) {
-            // Por ahora, solo invertimos la dirección para que rebote
-            // En la próxima clase implementaremos la pérdida de vidas
-            ball.dy = -ball.dy;
-        }
-    }
-
-    // Game Loop principal
-    function dibujar() {
-        // Limpiar canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Dibujar elementos del juego
-        dibujarLadrillos();
-        dibujarPelota();
-        dibujarPaleta();
-        dibujarPuntuacion();
-        
-        // Actualizar estado del juego
-        actualizarPelota();
-        
-        // Continuar animación
-        if (gameRunning) {
-            animationId = requestAnimationFrame(dibujar);
-        }
-    }
-
-    // Iniciar juego
-    function iniciarJuego() {
-        if (!gameRunning) {
-            gameRunning = true;
-            gameOverElement.style.display = 'none';
-            dibujar();
-        }
-    }
-
-    // Event listeners
-    startButton.addEventListener('click', iniciarJuego);
-
-    // Configuración inicial
-    crearLadrillos();
-    dibujarLadrillos();
-    dibujarPelota();
-    dibujarPaleta();
-    dibujarPuntuacion();
-});
-```
-
-## Tareas para la Próxima Clase
-1. Revisar el código de la clase 1
-2. Experimentar con diferentes colores y tamaños para los elementos
-3. Intentar responder: ¿Cómo podríamos implementar el control de la paleta con el teclado?
-4. Opcional: Agregar más estilos al CSS para personalizar la apariencia del juego
-
-## Recursos Adicionales
-- [MDN Web Docs: Canvas API](https://developer.mozilla.org/es/docs/Web/API/Canvas_API)
-- [Tutorial de Canvas en W3Schools](https://www.w3schools.com/html/html5_canvas.asp)
-- [Documentación sobre requestAnimationFrame](https://developer.mozilla.org/es/docs/Web/API/window/requestAnimationFrame)
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar un color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1,  // 1 = visible, 0 = destruido
-                    color: brickColor 
-                };
-            }
-        }
-    }
-    
-    // Dibujar la pelota
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = ball.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar la paleta
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
-        ctx.fillStyle = paddle.color;
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar los ladrillos
-    function dibujarLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            for (let r = 0; r < brickRowCount; r++) {
-                if (bricks[c][r].status === 1) {
-                    ctx.beginPath();
-                    ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.fillStyle = bricks[c][r].color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
-                    ctx.closePath();
-                }
-            }
-        }
-    }
-    
-    // Dibujar puntuación y vidas
-    function dibujarPuntuacion() {
-        scoreElement.textContent = score;
-        livesElement.textContent = lives;
-    }
-    
-    // Crear los ladrillos al cargar la página
-    crearLadrillos();
-    
-    // Dibujar todos los elementos
-    dibujarLadrillos();
-    dibujarPelota();
-    dibujarPaleta();
-    dibujarPuntuacion();
-    
-    // Evento para el botón de inicio
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado - Todos los elementos dibujados');
-    });
-});
-```
-
-## 6. Implementación del Game Loop Básico (30 minutos)
-
-### 6.1 Crear la función principal de dibujo
-
-Vamos a implementar el game loop básico que se encargará de actualizar y redibujar los elementos del juego:
-
-```javascript
-// script.js - Game Loop Básico
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.get# Clase 1: Introducción al Desarrollo de Juegos con JavaScript y Canvas
+# Clase 1: Introducción al Desarrollo de Juegos con JavaScript y Canvas
 
 ## Detalles del Curso
 - **Proyecto Final**: Juego Breakout completo
@@ -857,31 +139,6 @@ button:hover {
 }
 ```
 
-### 2.4 JavaScript inicial (estructura base)
-
-```javascript
-// script.js - Estructura inicial base
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('El DOM se ha cargado completamente');
-    
-    // Obtener referencias a los elementos del DOM
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    console.log('Canvas obtenido:', canvas);
-    console.log('Contexto de dibujo obtenido:', ctx);
-    
-    // Evento para el botón de inicio
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado');
-        // Aquí irá la lógica para iniciar el juego más adelante
-    });
-});
-
 ## 3. Introducción a Canvas (45 minutos)
 
 ### 3.1 ¿Qué es Canvas?
@@ -908,341 +165,163 @@ const ctx = canvas.getContext('2d');
 - Transparencia (alpha)
 - Gradientes
 
-### 3.5 Ejemplos básicos de Canvas (código de demostración)
-
-```javascript
-// script.js - Ejemplos básicos de Canvas
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Ejemplo 1: Rectángulo relleno
-    ctx.fillStyle = 'red';
-    ctx.fillRect(50, 50, 150, 100); // x, y, ancho, alto
-    
-    // Ejemplo 2: Rectángulo con borde
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 5;
-    ctx.strokeRect(250, 50, 150, 100);
-    
-    // Ejemplo 3: Círculo
-    ctx.beginPath();
-    ctx.arc(450, 100, 50, 0, Math.PI * 2); // x, y, radio, ángulo inicial, ángulo final
-    ctx.fillStyle = 'green';
-    ctx.fill();
-    ctx.closePath();
-    
-    // Ejemplo 4: Línea
-    ctx.beginPath();
-    ctx.moveTo(50, 200);    // Punto inicial
-    ctx.lineTo(200, 250);   // Punto final
-    ctx.strokeStyle = 'purple';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.closePath();
-    
-    // Ejemplo 5: Texto
-    ctx.font = '30px Arial';
-    ctx.fillStyle = 'orange';
-    ctx.fillText('Breakout Game', 300, 250);
-    
-    // Ejemplo 6: Rectángulo con gradiente
-    const gradient = ctx.createLinearGradient(50, 300, 200, 400);
-    gradient.addColorStop(0, 'magenta');
-    gradient.addColorStop(1, 'cyan');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(50, 300, 150, 100);
-});
-```
-
 ## 4. Ejercicio Práctico: Dibujar Elementos Básicos (30 minutos)
 
-Ahora vamos a modificar nuestro código para dibujar los elementos básicos del juego Breakout:
-
 ```javascript
-// script.js - Dibujar elementos básicos del juego
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Limpiar canvas primero (por si hemos dibujado algo antes)
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Dibujar un rectángulo (paleta)
-    function dibujarPaleta() {
-        ctx.beginPath();
-        ctx.rect(350, 580, 100, 15);  // x, y, width, height
-        ctx.fillStyle = '#4169E1';    // Color azul royal
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar un círculo (pelota)
-    function dibujarPelota() {
-        ctx.beginPath();
-        ctx.arc(400, 570, 10, 0, Math.PI * 2); // x, y, radio, ángulo inicial, ángulo final
-        ctx.fillStyle = '#FF6347';             // Color tomate
-        ctx.fill();
-        ctx.closePath();
-    }
-    
-    // Dibujar un ladrillo
-    function dibujarLadrillo() {
-        ctx.beginPath();
-        ctx.rect(200, 100, 75, 20);   // x, y, width, height
-        ctx.fillStyle = '#FFA500';    // Color naranja
-        ctx.fill();
-        ctx.strokeStyle = '#000';     // Borde negro
-        ctx.strokeRect(200, 100, 75, 20);
-        ctx.closePath();
-    }
-    
-    // Dibujar múltiples ladrillos en una fila
-    function dibujarFilaLadrillos() {
-        const anchoLadrillo = 75;
-        const altoLadrillo = 20;
-        const espacioLadrillo = 10;
-        const offsetIzquierda = 45;
-        const offsetArriba = 60;
-        
-        for (let c = 0; c < 9; c++) {
-            const x = c * (anchoLadrillo + espacioLadrillo) + offsetIzquierda;
-            const y = offsetArriba;
-            
-            ctx.beginPath();
-            ctx.rect(x, y, anchoLadrillo, altoLadrillo);
-            ctx.fillStyle = '#FF6347'; // Todos los ladrillos de color tomate
-            ctx.fill();
-            ctx.strokeStyle = '#000';
-            ctx.strokeRect(x, y, anchoLadrillo, altoLadrillo);
-            ctx.closePath();
-        }
-    }
-    
-    // Llamar a las funciones de dibujo
-    dibujarPaleta();
-    dibujarPelota();
-    dibujarLadrillo();
-    dibujarFilaLadrillos();
-    
-    // Evento para el botón de inicio
-    const startButton = document.getElementById('startButton');
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado - Elementos básicos dibujados');
-    });
-});
+// Dibujar un rectángulo (paleta)
+function dibujarPaleta() {
+    ctx.beginPath();
+    ctx.rect(350, 580, 100, 15);  // x, y, width, height
+    ctx.fillStyle = '#4169E1';    // Color azul royal
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Dibujar un círculo (pelota)
+function dibujarPelota() {
+    ctx.beginPath();
+    ctx.arc(400, 570, 10, 0, Math.PI * 2); // x, y, radio, ángulo inicial, ángulo final
+    ctx.fillStyle = '#FF6347';             // Color tomate
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Dibujar un ladrillo
+function dibujarLadrillo() {
+    ctx.beginPath();
+    ctx.rect(200, 100, 75, 20);   // x, y, width, height
+    ctx.fillStyle = '#FFA500';    // Color naranja
+    ctx.fill();
+    ctx.strokeStyle = '#000';     // Borde negro
+    ctx.strokeRect(200, 100, 75, 20);
+    ctx.closePath();
+}
+
+// Llamar a las funciones de dibujo
+dibujarPaleta();
+dibujarPelota();
+dibujarLadrillo();
 ```
 
 ## 5. Creación de la Estructura de Objetos del Juego (45 minutos)
 
 ### 5.1 Definir variables y objetos del juego
 
-Vamos a modificar nuestro script.js para incluir las definiciones de los objetos del juego:
-
 ```javascript
-// script.js - Estructura de objetos del juego
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    
-    // Propiedades de la pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,  // velocidad en x
-        dy: -4, // velocidad en y (negativo = hacia arriba)
-        color: '#FF6347'
-    };
-    
-    // Propiedades de la paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-    
-    // Propiedades de los ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    
-    console.log('Objetos del juego inicializados:');
-    console.log('Pelota:', ball);
-    console.log('Paleta:', paddle);
-    console.log('Configuración de ladrillos:', {
-        filas: brickRowCount,
-        columnas: brickColumnCount,
-        ancho: brickWidth,
-        alto: brickHeight
-    });
-    
-    // Evento para el botón de inicio
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado - Objetos inicializados');
-    });
-});
+// Variables del juego
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+
+// Propiedades de la pelota
+const ball = {
+    x: canvas.width / 2,
+    y: canvas.height - 30,
+    radius: 10,
+    dx: 4,  // velocidad en x
+    dy: -4, // velocidad en y (negativo = hacia arriba)
+    color: '#FF6347'
+};
+
+// Propiedades de la paleta
+const paddle = {
+    width: 100,
+    height: 15,
+    x: (canvas.width - 100) / 2,
+    y: canvas.height - 20,
+    speed: 8,
+    color: '#4169E1'
+};
+
+// Propiedades de los ladrillos
+const brickRowCount = 5;
+const brickColumnCount = 9;
+const brickWidth = 75;
+const brickHeight = 20;
+const brickPadding = 10;
+const brickOffsetTop = 60;
+const brickOffsetLeft = 45;
 ```
 
 ### 5.2 Crear la matriz de ladrillos
 
-Ahora, agregaremos la creación de la matriz de ladrillos:
-
 ```javascript
-// script.js - Crear matriz de ladrillos
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    
-    // Propiedades de la pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,
-        dy: -4,
-        color: '#FF6347'
-    };
-    
-    // Propiedades de la paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-    
-    // Propiedades de los ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    
-    // Crear el arreglo de ladrillos
-    const bricks = [];
-    
-    function crearLadrillos() {
-        for (let c = 0; c < brickColumnCount; c++) {
-            bricks[c] = [];
-            for (let r = 0; r < brickRowCount; r++) {
-                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                
-                // Generar un color según la fila
-                let brickColor;
-                switch(r) {
-                    case 0: brickColor = '#FF6347'; break; // Tomate
-                    case 1: brickColor = '#FFA500'; break; // Naranja
-                    case 2: brickColor = '#FFD700'; break; // Dorado
-                    case 3: brickColor = '#32CD32'; break; // Verde Lima
-                    case 4: brickColor = '#4169E1'; break; // Azul Royal
-                    default: brickColor = '#FFF'; break;
-                }
-                
-                bricks[c][r] = { 
-                    x: brickX, 
-                    y: brickY, 
-                    status: 1,  // 1 = visible, 0 = destruido
-                    color: brickColor 
-                };
+// Crear el arreglo de ladrillos
+const bricks = [];
+
+function crearLadrillos() {
+    for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+            const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+            const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+            
+            // Generar un color según la fila
+            let brickColor;
+            switch(r) {
+                case 0: brickColor = '#FF6347'; break; // Tomate
+                case 1: brickColor = '#FFA500'; break; // Naranja
+                case 2: brickColor = '#FFD700'; break; // Dorado
+                case 3: brickColor = '#32CD32'; break; // Verde Lima
+                case 4: brickColor = '#4169E1'; break; // Azul Royal
+                default: brickColor = '#FFF'; break;
             }
+            
+            bricks[c][r] = { 
+                x: brickX, 
+                y: brickY, 
+                status: 1,  // 1 = visible, 0 = destruido
+                color: brickColor 
+            };
         }
-        
-        console.log('Ladrillos creados:', bricks);
     }
-    
-    // Crear los ladrillos al cargar la página
-    crearLadrillos();
-    
-    // Evento para el botón de inicio
-    startButton.addEventListener('click', () => {
-        console.log('Botón de inicio presionado - Ladrillos creados');
-    });
-});
+}
 ```
 
 ### 5.3 Funciones para dibujar todos los elementos
 
-Ahora agregaremos las funciones para dibujar todos los elementos del juego:
-
 ```javascript
-// script.js - Funciones para dibujar elementos
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const scoreElement = document.getElementById('score');
-    const livesElement = document.getElementById('lives');
-    const gameOverElement = document.getElementById('gameOver');
-    
-    // Variables del juego
-    let score = 0;
-    let lives = 3;
-    let gameRunning = false;
-    
-    // Propiedades de la pelota
-    const ball = {
-        x: canvas.width / 2,
-        y: canvas.height - 30,
-        radius: 10,
-        dx: 4,
-        dy: -4,
-        color: '#FF6347'
-    };
-    
-    // Propiedades de la paleta
-    const paddle = {
-        width: 100,
-        height: 15,
-        x: (canvas.width - 100) / 2,
-        y: canvas.height - 20,
-        speed: 8,
-        color: '#4169E1'
-    };
-    
-    // Propiedades de los ladrillos
-    const brickRowCount = 5;
-    const brickColumnCount = 9;
-    const brickWidth = 75;
-    const brickHeight = 20;
-    const brickPadding = 10;
-    const brickOffsetTop = 60;
-    const brickOffsetLeft = 45;
-    
-    // Crear el arreglo de ladrillos
-    const bricks = [];
-    
-    function crearLadrillos() {
+// Dibujar la pelota
+function dibujarPelota() {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = ball.color;
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Dibujar la paleta
+function dibujarPaleta() {
+    ctx.beginPath();
+    ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
+    ctx.fillStyle = paddle.color;
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Dibujar los ladrillos
+function dibujarLadrillos() {
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            if (bricks[c][r].status === 1) {
+                ctx.beginPath();
+                ctx.rect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
+                ctx.fillStyle = bricks[c][r].color;
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(bricks[c][r].x, bricks[c][r].y, brickWidth, brickHeight);
+                ctx.closePath();
+            }
+        }
+    }
+}
+
+// Dibujar puntuación y vidas
+function dibujarPuntuacion() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('lives').textContent = lives;
+}
+```
 
 ## 6. Implementación del Game Loop Básico (30 minutos)
 
